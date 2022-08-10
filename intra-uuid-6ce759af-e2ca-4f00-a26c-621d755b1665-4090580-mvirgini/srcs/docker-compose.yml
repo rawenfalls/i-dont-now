@@ -1,0 +1,102 @@
+version: '3.3'
+services:
+
+  mariadb:
+    build: requirements/mariadb/
+    image: mariadb
+    container_name: mariadb
+    volumes:
+      - "/home/mvirgini/data/mariadb:/var/lib/mysql"
+    networks:  
+      - backend
+    restart: always
+    env_file:
+      - .env
+
+  wordpress:
+    build: requirements/wordpress
+    image: wordpress
+    container_name: wordpress
+    volumes:
+      - "/home/mvirgini/data/website:/var/www/html"
+    depends_on:
+      - mariadb
+      - redis
+    networks:
+      - visual
+      - backend
+    restart: always
+    env_file:
+      - .env
+
+  nginx:
+    build: requirements/nginx/
+    image: nginx
+    container_name: nginx
+    ports:
+      - "443:443"
+    volumes:
+      - "/home/mvirgini/data/website:/var/www/html"
+    depends_on:
+      - wordpress
+      - static_website
+    networks:
+      - visual
+    restart: always
+    
+  redis:
+    build: requirements/bonus/redis
+    image: redis
+    container_name: redis
+    networks:
+      - backend
+    restart: always
+
+  static_website:
+    build: requirements/bonus/static_website
+    container_name: static_website
+    networks:
+      - visual
+    restart: always
+    
+  adminer:
+    build: requirements/bonus/adminer
+    image: adminer
+    container_name: adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+    restart: always
+
+  ftps:
+    build: requirements/bonus/ftps/
+    container_name: ftps
+    volumes:
+      - "/home/mvirgini/data/website:/home/mvirgini"
+    ports:
+      - "21:21"
+      - "20:20"
+      - "2021:2021"
+    networks:
+      - backend
+    restart: always
+    env_file:
+      - .env
+      
+  redis_commander:
+    build: requirements/bonus/redis_commander/
+    container_name: redis_commander
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - backend
+    restart: always
+    env_file:
+      - .env
+    
+networks:
+  visual:
+  backend:
